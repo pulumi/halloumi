@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"time"
@@ -10,10 +11,11 @@ import (
 	"github.com/evanboyle/halloumi/sdk/app"
 	"github.com/evanboyle/halloumi/sdk/web"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/common/log"
 )
 
 func main() {
-	app := app.NewApp("petStore")
+	app := app.NewApp("HalloumiPetStore")
 
 	// a cloud web service that returns a number [0-100)
 	randomNumberService := web.NewWebService("randomNumber", func() http.Handler {
@@ -38,20 +40,45 @@ func main() {
 	})
 
 	// a cloud web service that returns N of a random animal.
+	// this service takes a dependency on the URLs of the previously defined services
 	nAnimalsService := web.NewWebService("nAnimals", func() http.Handler {
 		r := mux.NewRouter()
+		var num string
+		var animal string
 		handler := func(w http.ResponseWriter, r *http.Request) {
-			num, err := http.Get(randomNumberService.URL())
+			// Notice how we have the URL of randomNumberService
+			// available to consume here!
+			numResp, err := http.Get(randomNumberService.URL())
 			if err != nil {
 				fmt.Fprintf(w, err.Error())
 			}
+			defer numResp.Body.Close()
 
-			animal, err := http.Get(randomAnimalService.URL())
+			if numResp.StatusCode == http.StatusOK {
+				bodyBytes, err := ioutil.ReadAll(numResp.Body)
+				if err != nil {
+					log.Fatal(err)
+				}
+				num = string(bodyBytes)
+			}
+
+			// Notice how we have the URL of randomAnimalService
+			// available to consume here!
+			animalResp, err := http.Get(randomAnimalService.URL())
 			if err != nil {
 				fmt.Fprintf(w, err.Error())
 			}
+			defer numResp.Body.Close()
 
-			fmt.Fprintf(w, "Wow, you got %d %ss!", num, animal)
+			if animalResp.StatusCode == http.StatusOK {
+				bodyBytes, err := ioutil.ReadAll(animalResp.Body)
+				if err != nil {
+					log.Fatal(err)
+				}
+				animal = string(bodyBytes)
+			}
+
+			fmt.Fprintf(w, "Wow, you got %s %ss!", num, animal)
 		}
 		r.HandleFunc("/", handler)
 		return r

@@ -16,7 +16,7 @@ type WebService struct {
 func (w *WebService) URL() string {
 	// when another process is deploying, use an environment variable
 	// when self is deploying, use localhost:80
-	return "https://" + os.Getenv(fmt.Sprintf("HALLOUMI_%s_URL", w.Name))
+	return "http://" + os.Getenv(fmt.Sprintf("HALLOUMI_%s_URL", w.Name))
 }
 
 type WebServiceFunc = func() http.Handler
