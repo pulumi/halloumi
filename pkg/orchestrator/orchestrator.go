@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/ec2"
@@ -175,6 +176,7 @@ func (a *App) Deploy() error {
 
 func (a *App) DeployServices(wsi wsInput) error {
 	// TODO: accumulate environement vairables as we deploy these stacks
+	var urlEnvs []envVar
 
 	for _, s := range a.services {
 		fmt.Printf("Deploying service %s\n", s.name)
@@ -182,7 +184,7 @@ func (a *App) DeployServices(wsi wsInput) error {
 			Name:  fmt.Sprintf("HALLOUMI_%s_%s", a.name, s.name),
 			Value: "1",
 		}
-		wsi.envs = []envVar{runEnv}
+		wsi.envs = append(urlEnvs, runEnv)
 		pFunc := getPulumiServiceFunc(wsi)
 
 		ctx := context.Background()
@@ -216,8 +218,13 @@ func (a *App) DeployServices(wsi wsInput) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to update: ")
 		}
+		url := uRes.Outputs["url"].Value.(string)
+		urlEnvs = append(urlEnvs, envVar{
+			Name:  fmt.Sprintf("HALLOUMI_%s_URL", s.name),
+			Value: url,
+		})
 		fmt.Printf("Successfully deployed service %s\n", s.name)
-		fmt.Printf("Service %s running at: %s\n", s.name, uRes.Outputs["url"].Value.(string))
+		fmt.Printf("Service %s running at: %s\n", s.name, url)
 	}
 
 	return nil
@@ -332,7 +339,7 @@ var appPulumiFunc = func(ctx *pulumi.Context) error {
 		Build: docker.DockerBuildArgs{
 			Context: pulumi.String(filepath.Join(".")),
 		},
-		ImageName: repo.RepositoryUrl,
+		ImageName: pulumi.Sprintf("%s:%d", repo.RepositoryUrl, pulumi.Int(time.Now().Unix())),
 		Registry: docker.ImageRegistryArgs{
 			Server:   repo.RepositoryUrl,
 			Username: repoUser,
@@ -350,6 +357,7 @@ var appPulumiFunc = func(ctx *pulumi.Context) error {
 	return nil
 }
 
+// TODO - this doesn't seem to be updating as I would expect
 func getPulumiServiceFunc(wsi wsInput) pulumi.RunFunc {
 	return func(ctx *pulumi.Context) error {
 		// Create a load balancer to listen for HTTP traffic on port 80.

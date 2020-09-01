@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	app := app.NewApp("dev")
+	app := app.NewApp("petStore")
 
 	// a cloud web service that returns a number [0-100)
 	randomNumberService := web.NewWebService("randomNumber", func() http.Handler {
@@ -37,28 +37,27 @@ func main() {
 		return r
 	})
 
-	// TODO: we'll work on this one last as it adds the URL env var features
 	// a cloud web service that returns N of a random animal.
-	// nAnimalsService := web.NewWebService("nAnimals", func() http.Handler {
-	// 	r := mux.NewRouter()
-	// 	handler := func(w http.ResponseWriter, r *http.Request) {
-	// 		num, err := http.Get(randomNumberService.URL())
-	// 		if err != nil {
-	// 			fmt.Fprintf(w, err.Error())
-	// 		}
+	nAnimalsService := web.NewWebService("nAnimals", func() http.Handler {
+		r := mux.NewRouter()
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			num, err := http.Get(randomNumberService.URL())
+			if err != nil {
+				fmt.Fprintf(w, err.Error())
+			}
 
-	// 		animal, err := http.Get(randomAnimalService.URL())
-	// 		if err != nil {
-	// 			fmt.Fprintf(w, err.Error())
-	// 		}
+			animal, err := http.Get(randomAnimalService.URL())
+			if err != nil {
+				fmt.Fprintf(w, err.Error())
+			}
 
-	// 		fmt.Fprintf(w, "You got %d %ss!", num, animal)
-	// 	}
-	// 	r.HandleFunc("/", handler)
-	// 	return r
-	// })
+			fmt.Fprintf(w, "Wow, you got %d %ss!", num, animal)
+		}
+		r.HandleFunc("/", handler)
+		return r
+	})
 
 	app.Register(randomNumberService)
 	app.Register(randomAnimalService)
-	//app.Register(nAnimalsService)
+	app.Register(nAnimalsService)
 }

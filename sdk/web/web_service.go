@@ -1,6 +1,10 @@
 package web
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+	"os"
+)
 
 // WebService runs an http handler in the cloud
 type WebService struct {
@@ -12,7 +16,7 @@ type WebService struct {
 func (w *WebService) URL() string {
 	// when another process is deploying, use an environment variable
 	// when self is deploying, use localhost:80
-	return "" // TODO
+	return "https://" + os.Getenv(fmt.Sprintf("HALLOUMI_%s_URL", w.Name))
 }
 
 type WebServiceFunc = func() http.Handler
