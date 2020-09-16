@@ -94,8 +94,9 @@ nAnimalsService := web.NewWebService("nAnimals", func() http.Handler {
 
 ## prereqs
 
-1. authenticated pulumi CLI
+1. authenticated pulumi CLI (>= v2.10.1)
 2. AWS CLI + creds
+3. Docker
 
 ## How does it work?
 The halloumi orchestrator works off of the principal of invoking the program different sets of environment variables
