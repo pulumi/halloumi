@@ -19,11 +19,12 @@ import (
 	elb "github.com/pulumi/pulumi-aws/sdk/v3/go/aws/elasticloadbalancingv2"
 	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/iam"
 	"github.com/pulumi/pulumi-docker/sdk/v2/go/docker"
-	"github.com/pulumi/pulumi/sdk/v2/go/common/tokens"
-	"github.com/pulumi/pulumi/sdk/v2/go/common/workspace"
 	"github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v2/go/x/auto"
+	"github.com/pulumi/pulumi/sdk/v2/go/x/auto/optup"
 )
+
+const projectName = "halloumi1"
 
 func DryRun(programPath string) (map[string]*App, error) {
 	drEnv := "DRY_RUN=true"
@@ -88,7 +89,15 @@ func Deploy(apps map[string]*App) error {
 func (a *App) Deploy() error {
 	// setup workspace
 	ctx := context.Background()
-	ws, err := auto.NewLocalWorkspace(ctx, auto.Program(appPulumiFunc), auto.Project(getProject()))
+	stackName := fmt.Sprintf("app%s", a.name)
+	// create or select an existing stack using the inline Pulumi program
+	s, err := auto.UpsertStackInlineSource(ctx, stackName, projectName, appPulumiFunc)
+	if err != nil {
+		fmt.Printf("fialed to create or select stack: %v\n", err)
+		os.Exit(1)
+	}
+
+	ws := s.Workspace()
 
 	//install neccessary plugins
 	err = ws.InstallPlugin(ctx, "aws", "v3.1.0")
@@ -102,20 +111,6 @@ func (a *App) Deploy() error {
 		os.Exit(1)
 	}
 
-	// create stack on behalf of user
-	user, err := ws.WhoAmI(ctx)
-	if err != nil {
-		return err
-	}
-	fqsn := auto.FullyQualifiedStackName(user, "halloumi", fmt.Sprintf("app%s", a.name))
-	s, err := auto.NewStack(ctx, fqsn, ws)
-	if err != nil {
-		s, err = auto.SelectStack(ctx, fqsn, ws)
-		if err != nil {
-			return err
-		}
-	}
-
 	err = s.SetConfig(ctx, "aws:region", auto.ConfigValue{Value: "us-west-2"})
 	if err != nil {
 		return err
@@ -126,7 +121,11 @@ func (a *App) Deploy() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to refresh: ")
 	}
-	uRes, err := s.Up(ctx)
+
+	// wire up our update to stream progress to stdout
+	stdoutStreamer := optup.ProgressStreams(os.Stdout)
+
+	uRes, err := s.Up(ctx, stdoutStreamer)
 	if err != nil {
 		return errors.Wrap(err, "failed to update: ")
 	}
@@ -188,20 +187,11 @@ func (a *App) DeployServices(wsi wsInput) error {
 		pFunc := getPulumiServiceFunc(wsi)
 
 		ctx := context.Background()
-		ws, err := auto.NewLocalWorkspace(ctx, auto.Program(pFunc), auto.Project(getProject()))
-
-		// create stack on behalf of user
-		user, err := ws.WhoAmI(ctx)
+		stackName := fmt.Sprintf("app%ssvc%s", a.name, s.name)
+		stack, err := auto.UpsertStackInlineSource(ctx, stackName, projectName, pFunc)
 		if err != nil {
-			return err
-		}
-		fqsn := auto.FullyQualifiedStackName(user, "halloumi", fmt.Sprintf("app%ssvc%s", a.name, s.name))
-		stack, err := auto.NewStack(ctx, fqsn, ws)
-		if err != nil {
-			stack, err = auto.SelectStack(ctx, fqsn, ws)
-			if err != nil {
-				return err
-			}
+			fmt.Printf("fialed to create or select stack: %v\n", err)
+			os.Exit(1)
 		}
 
 		err = stack.SetConfig(ctx, "aws:region", auto.ConfigValue{Value: "us-west-2"})
@@ -214,7 +204,11 @@ func (a *App) DeployServices(wsi wsInput) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to refresh: ")
 		}
-		uRes, err := stack.Up(ctx)
+
+		// wire up our update to stream progress to stdout
+		stdoutStreamer := optup.ProgressStreams(os.Stdout)
+
+		uRes, err := stack.Up(ctx, stdoutStreamer)
 		if err != nil {
 			return errors.Wrap(err, "failed to update: ")
 		}
@@ -453,13 +447,4 @@ func toPulumiStringArray(a []string) pulumi.StringArrayInput {
 		res = append(res, pulumi.String(s))
 	}
 	return pulumi.StringArray(res)
-}
-
-func getProject() workspace.Project {
-	proj := workspace.Project{
-		Name:    tokens.PackageName("halloumi"),
-		Runtime: workspace.NewProjectRuntimeInfo("go", nil),
-	}
-
-	return proj
 }
