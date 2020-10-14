@@ -4,6 +4,8 @@ Pulumi + Heroku = Halloumi
 
 You write your application, we run it in the cloud.
 
+`halloumi` is a prototype and not under active development. 
+
 ## Summary
 
 The halloumi SDK defines an application model where you simply write your http handler, and we take care of the rest:
