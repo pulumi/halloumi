@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/evanboyle/halloumi/pkg/orchestrator"
 	"github.com/pkg/errors"
+	"github.com/pulumi/halloumi/pkg/orchestrator"
 	"github.com/spf13/cobra"
 )
 

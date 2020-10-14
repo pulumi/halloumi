@@ -1,3 +1,3 @@
 build: install
 install: 
-	go install github.com/evanboyle/halloumi/pkg/cmd/halloumi
+	go install github.com/pulumi/halloumi/pkg/cmd/halloumi

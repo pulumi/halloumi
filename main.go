@@ -8,10 +8,10 @@ import (
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/evanboyle/halloumi/sdk/app"
-	"github.com/evanboyle/halloumi/sdk/web"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/log"
+	"github.com/pulumi/halloumi/sdk/app"
+	"github.com/pulumi/halloumi/sdk/web"
 )
 
 func main() {

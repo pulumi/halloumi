@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/evanboyle/halloumi/sdk/web"
+	"github.com/pulumi/halloumi/sdk/web"
 )
 
 type App struct {
