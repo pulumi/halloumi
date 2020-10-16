@@ -2,6 +2,8 @@
 
 This version of halloumi creates a library that can be used with independently executable programs. You still get multi-service dependency, but you don't need a higher-level CLI. Just `yarn start` and you're off to the races.
 
+This library also supports a super speedy local development mode (if a 20 second lambda deployment is too slow of a dev loop). Just run `yarn local` and your services will run on `localhost`.
+
 ```typescript
 const application = new App();
 
@@ -99,6 +101,26 @@ omg i\'m alive
 
 $ curl https://nk9u34tf0g.execute-api.us-west-2.amazonaws.com/stage/
 this is the world. With a windo from hello:
+omg i\'m alive
+ 
+!!!!!!!wow!!!!!!!
+```
+
+### Local Mode
+
+Just run `yarn local` to get the services running on `localhost`:
+
+```shell
+$ yarn local
+yarn run v1.22.10
+$ tsc && AWS_REGION=us-west-2 node ./bin/index.js local
+service "hello" running at: http://localhost:60957
+service "world" running at: http://localhost:60958
+
+$ curl http://localhost:60957
+omg i\'m alive
+
+$ curl http://localhost:60958
 omg i\'m alive
  
 !!!!!!!wow!!!!!!!
