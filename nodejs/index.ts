@@ -16,7 +16,7 @@ const svc2 = new WebService("world", (expressApp: express.Express) => {
         const svc1Url = svc1.discover();
         const result = await (await fetch(svc1Url)).text()
         
-        res.send(`this is the world. With a windo from hello:\n${result} \n`);
+        res.send(`this is the world. With a window from hello:\n${result} \n`);
     });
 });
 application.addService(svc2);

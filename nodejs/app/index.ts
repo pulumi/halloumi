@@ -16,6 +16,23 @@ export class App {
     }
 
     async run() {
+
+        const args = process.argv.slice(2);
+        let local = false;
+        if (args.length > 0 && args[0]) {
+            local = args[0] === "local";
+        }
+
+        if (local) {
+            await this.deployLocal();
+        }
+        else {
+            await this.deployAWS()
+        }
+        
+    }
+
+    async deployAWS() {
         const pulumiProgram = async () => {
             const outputs: { [key: string]: any; } = {};
 
@@ -86,12 +103,23 @@ export class App {
             program: pulumiProgram,
         };
 
-        const stack = await LocalWorkspace.createOrSelectStack(args, { workDir: process.cwd()});
+        const stack = await LocalWorkspace.createOrSelectStack(args, { workDir: process.cwd() });
         await stack.workspace.installPlugin("aws", "v3.6.1");
         await stack.setConfig("aws:region", { value: "us-west-2" });
         const upRes = await stack.up({ onOutput: console.info });
         for (let svc of this.services) {
-            console.log(`service "${svc.name}" running at: ${upRes.outputs[svc.name].value}`)
+            console.log(`service "${svc.name}" running at: ${upRes.outputs[svc.name].value}`);
+        }
+    }
+
+    async deployLocal() {
+        for (let svc of this.services) {
+            const app = express();
+            svc.handler(app)
+            const server = app.listen();
+            svc.__local = true;
+            svc.__url = `http://localhost:${(server.address() as any).port}`;
+            console.log(`service "${svc.name}" running at: ${svc.__url}`);
         }
     }
 }

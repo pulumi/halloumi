@@ -19,6 +19,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "tsc && AWS_REGION=us-west-2 node ./bin/index.js"
+    "start": "tsc && AWS_REGION=us-west-2 node ./bin/index.js",
+    "local": "tsc && AWS_REGION=us-west-2 node ./bin/index.js local"
   }
 }
