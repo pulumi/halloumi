@@ -8,41 +8,7 @@ You write your application, we run it in the cloud.
 
 ## Summary
 
-The halloumi SDK defines an application model where you simply write your http handler, and we take care of the rest. 
-
-The [node](./nodejs) version is independently runnable via `yarn start`, and the [go](./go) version has a small binary CLI to orchestrate execution. 
-
-All you have to do is define HTTP handlers, and `halloumi` takes care of running it in the cloud:
-
-### Node.js
-
-```typescript
-// this application will deploy multiple services publicly available int the cloud
-const application = new App();
-
-const svc1 = new WebService("hello", (expressApp: express.Express) => {
-    // a simple static handler
-    expressApp.get('/', (req, res) => res.send("omg i'm alive\n"));
-});
-application.addService(svc1);
-
-
-const svc2 = new WebService("world", (expressApp: express.Express) => {
-    expressApp.get('/', async (req, res) => {
-        // track dependencies across services and make them available at runtime
-        const svc1Url = svc1.discover();
-        // this handler calls svc1 and passes the result through
-        const result = await (await fetch(svc1Url)).text()
-        
-        res.send(`this is the world. With a window from hello:\n${result} \n`);
-    });
-});
-application.addService(svc2);
-
-application.run().catch(err => { console.error(err) });
-```
-
-### Go
+The halloumi SDK defines an application model where you simply write your http handler, and we take care of the rest:
 
 ```go
 app := app.NewApp("petStore")
@@ -62,10 +28,21 @@ randomNumberService := web.NewWebService("randomNumber", func() http.Handler {
 app.Register(randomNumberService)
 ```
 
+To deploy this app, simply run your program with the `halloumi` tool:
+
+```shell
+$ halloumi main.go
+Deployming app petStore
+Deploying service randomNumber
+Successfully deployed service randomNumber
+Service randomNumber running at: web-lb-f1f8017-934112424.us-west-2.elb.amazonaws.com
+Successfully deployed app petStore
+```
 ### Cross-service Dependencies
 Halloumi allows consuming services from other services:
 
 ```go
+
 // a cloud web service that returns N of a random animal.
 // this service takes a dependency on the URLs of the previously defined services
 nAnimalsService := web.NewWebService("nAnimals", func() http.Handler {
@@ -111,3 +88,28 @@ nAnimalsService := web.NewWebService("nAnimals", func() http.Handler {
     return r
 })
 ```
+
+## installation
+1. Clone repo to $GOPATH
+2. make (from this directory to install the halloumi tool)
+3. run the included example `halloumi main.go`
+
+## prereqs
+
+1. authenticated pulumi CLI (>= v2.10.1)
+2. AWS CLI + creds
+3. Docker
+
+## How does it work?
+The halloumi orchestrator works off of the principal of invoking the program different sets of environment variables
+
+1. First pass `DRY_RUN`: this procudes a list of apps and services to deploy allowing the program to exit without starting any http servers.
+2. The orchestrator deploys each app and service, building a docker image from the provided `main.go` file.
+3. When a service is deployed, an environment variable `HALLOUMI_APPNAME_SVCNAME` is set in the ECS task. When the program is run with that environment variable, the program will start a web server for the specified service. 
+
+## TODOs:
+1. Can we get rid of the CLI? This demo would be more powerful without it.
+2. Auto-generate the docker file side by side. Right now it is just checked in along side the example.
+3. Add some other components besides web services (blob, queue, db).
+4. Write an SDK for a language like javascript. The SDK layer is super thin and wouldn't be much work. 
+5. Perf/parallelism. Right now to be lazy, I don't detect dependencies and take advantage of the fact that declaration order is also dependency order. This just means that deployments are serial and slow. 

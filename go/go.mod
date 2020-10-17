@@ -1,4 +1,4 @@
-module github.com/pulumi/halloumi
+module github.com/pulumi/halloumi/go
 
 go 1.14
 

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/pulumi/halloumi/pkg/orchestrator"
+	"github.com/pulumi/halloumi/go/pkg/orchestrator"
 	"github.com/spf13/cobra"
 )
 

@@ -10,8 +10,8 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/log"
-	"github.com/pulumi/halloumi/sdk/app"
-	"github.com/pulumi/halloumi/sdk/web"
+	"github.com/pulumi/halloumi/go/sdk/app"
+	"github.com/pulumi/halloumi/go/sdk/web"
 )
 
 func main() {

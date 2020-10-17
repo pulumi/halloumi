@@ -3,12 +3,12 @@
 FROM golang
 
 # Copy the local package files to the container's workspace.
-ADD . /go/src/github.com/pulumi/halloumi
+ADD . /go/src/github.com/pulumi/halloumi/go
 
 # Build the outyet command inside the container.
 # (You may fetch or manage dependencies here,
 # either manually or with a tool like "godep".)
-WORKDIR /go/src/github.com/pulumi/halloumi
+WORKDIR /go/src/github.com/pulumi/halloumi/go
 RUN go build -o /go/bin/main
 
 # Run the outyet command by default when the container starts.
