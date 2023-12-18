@@ -13,6 +13,5 @@ require (
 	github.com/pulumi/pulumi/sdk/v2 v2.10.1
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/cobra v1.0.0
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
-	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 )
